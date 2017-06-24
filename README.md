@@ -26,3 +26,7 @@ npm install
 ### Run the server
 sudo node app.js
 
+### Start server at boot time
+Add the following line to crontab
+crontab -e 
+@reboot /home/pi/GIT/NAD-ir-remote/pi-remote/webapp.sh >> cron.log 2>&1
