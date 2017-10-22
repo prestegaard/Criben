@@ -1,31 +1,12 @@
-# NAD-ir-remote
-Control for NAD T474 with web interface
-Project is based upon this https://github.com/vartan/pi-remote.git
+# Criben control systems	
+Control for different systems within the crib we all live and breath in.
+Project is based upon Prestegaard and his spare time and lovely ideas.
 
 
 
-### Packages
-sudo apt-get install lirc
+### Projects
+####Webinterface remote controller
+Controller for e.g. the sound system and light system
+####Led controller arduino
+Controller for livingroom lights
 
-curl -L https://npmjs.org/install.sh | sudo sh
-
-install latest node deb package included with sudo dpkg -i
-
-### Files
-Add the following line to /boot/config.txt
-
-dtoverlay=lirc-rpi,gpio_out_pin=16,gpio_in_pin=18
-
-
-Swap /etc/lirc/ with the included files
-
-### Setup server environmet
-cd pi-remote
-npm install
-
-### Run the server
-sudo node app.js
-
-### Start server at boot time
-Add the following line to /etc/rc.local
-tmux new -s remote -d "sudo node /home/pi/GIT/NAD-ir-remote/pi-remote/app.js"
