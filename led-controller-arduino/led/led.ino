@@ -6,10 +6,26 @@ Author:	Haagon
 
 #include <FastLED.h>
 #include "leds.h"
+#include "MSGEQ7.h"
 
+CRGB leds[NUM_LEDS];
 
-CRGB leds[NUM_STRIPS * NUM_LEDS_PER_STRIP];
+#define DATA_PIN 3
+#define CHIPSET     WS2811
 
+#define BRIGHTNESS  255  // reduce power consumption
+#define LED_DITHER  255  // try 0 to disable flickering
+#define CORRECTION  TypicalLEDStrip
+
+// Filterchip setup
+#define pinAnalogLeft A3 
+#define pinAnalogRight A3
+#define pinReset A1
+#define pinStrobe A2
+#define MSGEQ7_INTERVAL ReadsPerSecond(100)
+#define MSGEQ7_SMOOTH true
+
+CMSGEQ7<MSGEQ7_SMOOTH, pinReset, pinStrobe, pinAnalogLeft, pinAnalogRight> MSGEQ7;
 
 void setup() {
 	delay(3000); // 3 second delay for recovery
@@ -25,63 +41,101 @@ void setup() {
 
 	// set master brightness control
 	FastLED.setBrightness(BRIGHTNESS);
-
+  FastLED.setDither(LED_DITHER);
+  
   red();
   FastLED.show();
+
+  // This will set the IC ready for reading
+  MSGEQ7.begin();
+
 }
 
 uint8_t gHue = 0;
+
+
+int spectrumValue[7];
+const int frames = 50;
+int frame = 0;
+int bass[frames];
+int snare[frames];
+int hat[frames];
+uint8_t val;
+int count_color = 0;
+int update_color = 5;
 // the loop function runs over and over again until power down or reset
 void loop() {
-	// Set each section with same color
-//	set_section(leds, STRIP0, NUM_LEDS_PER_STRIP, CHSV(gHue, 255, 255));
-//	delay(200);
-//	set_section(leds, STRIP1, STRIP1 + NUM_LEDS_PER_STRIP, CHSV(gHue, 255, 255));
-//	delay(200);
-//	set_section(leds, STRIP2, STRIP2 + NUM_LEDS_PER_STRIP, CHSV(gHue, 255, 255));
-//	delay(200);
-//	set_section(leds, STRIP3, STRIP3 + NUM_LEDS_PER_STRIP, CHSV(gHue, 255, 255));
-//	
-//	delay(2000);
+  // Analyze without delay
+  bool newReading = MSGEQ7.read(MSGEQ7_INTERVAL);
 
-//	// Fill each section with different color upwards
-//	gHue += 50;
-//	fill_section(leds, STRIP0, STRIP0 + NUM_LEDS_PER_STRIP, 10, CHSV(gHue, 255, 255));
-//	delay(200);
+  // Led strip output
+  if (newReading) {
+    // visualize the average bass of both channels
+    //uint8_t val = MSGEQ7.get(MSGEQ7_BASS);
+    // Reduce noise
+    //val = mapNoise(val);
+    //if (val < 10){
+    //  val = 5;
+    //}
+    
+    spectrumValue[0] = MSGEQ7.get(0);
+    spectrumValue[1] = MSGEQ7.get(1);
+    spectrumValue[2] = MSGEQ7.get(2);
+    spectrumValue[3] = MSGEQ7.get(3);
+    spectrumValue[4] = MSGEQ7.get(4);
+    spectrumValue[5] = MSGEQ7.get(5);
+    spectrumValue[6] = MSGEQ7.get(6);
+    
+    int new_bass = spectrumValue[0] + spectrumValue[1];
+    int new_snare = spectrumValue[3];
+    int new_hat = spectrumValue[6] + spectrumValue[5];
+  
+    if ((new_snare/find_average(snare, frames)) > 1){
+      //val = 10;
+    }
+    if ((new_hat/find_average(hat, frames)) > 1){
+      //val = 50;
+    }
+    if ((new_bass/find_average(bass, frames)) > 1){
+      val = new_bass;
+      count_color ++;
+      if(count_color % update_color == 0){
+        gHue = gHue + random(0,255);
+        update_color = random (1,10);
+        count_color = 0;
+      }
+    }
+    else if ((new_bass/find_average(bass, frames)) > 0.7){
+      val = bass[frame];
+    }
+    else {
+      val = find_average(bass, frames)/2;
+    }
+    
+    hat[frame] = new_hat;
+    snare[frame] = new_snare;
+    bass[frame] = new_bass;
+    frame++;
+    if (frame >= frames) frame=0;
+  
+    // Visualize leds to the beat
+    CRGB color = CHSV(gHue, 255, 255);
+    color.nscale8_video(val);
+    fill_solid(leds, NUM_LEDS, color);
 
-//	gHue += 50;
-//	fill_section(leds, STRIP1, STRIP1 + NUM_LEDS_PER_STRIP, 10, CHSV(gHue, 255, 255));
-//	delay(200);
+    // Update Leds
+    FastLED.show();
+  }
+	EVERY_N_MILLISECONDS(1000) { gHue++; } // slowly cycle the "base color" through the rainbow
 
-//	gHue += 50;
-//	fill_section(leds, STRIP2, STRIP2 + NUM_LEDS_PER_STRIP, 10, CHSV(gHue, 255, 255));
-//	delay(200);
+}
 
-
-//	gHue += 50;
-//	fill_section(leds, STRIP3, STRIP3 + NUM_LEDS_PER_STRIP, 10, CHSV(gHue, 255, 255));
-//	delay(200);
-
-//	// Run some sinelon loop
-//	sinelon(leds, CHSV(gHue, 255, 255));
-
-//	// Fade whole pyramide into new color
-//	fade_all(leds, 20, CHSV(gHue, 255, 255));
-//	delay(2000);
-//	gHue += 50;
-//	
-//	juggle(leds);
-	
-	//FastLED.show();
-	// insert a delay to keep the framerate modest
-	//FastLED.delay(1000 / FRAMES_PER_SECOND);
-	//rainbow();
-
-	//// do some periodic updates
-	//if (!sensor_changed_to_low)
-	//{
-	EVERY_N_MILLISECONDS(20) { gHue++; } // slowly cycle the "base color" through the rainbow
-
+int find_average(int ary[], int siz){
+  double sum = 0;
+  for (int i = 0; i < siz; i++){
+    sum += ary[i];
+  }
+  return sum/siz;
 }
 
 void rainbow(){
@@ -105,3 +159,4 @@ void red(){
   }
  
 }
+
