@@ -30,7 +30,7 @@ CMSGEQ7<MSGEQ7_SMOOTH, pinReset, pinStrobe, pinAnalogLeft, pinAnalogRight> MSGEQ
 void setup() {
 	delay(3000); // 3 second delay for recovery
 
-	// tell FastLED there's 50 NEOPIXEL leds on pin 9, starting at index 0 in the led array
+	// tell FastLED there's 50 LED_TYPE leds on pin 9, starting at index 0 in the led array
 	FastLED.addLeds<LED_TYPE, 9, COLOR_ORDER>(leds, 0, NUM_LEDS_PER_STRIP).setCorrection(TypicalLEDStrip);
 	// tell FastLED there's 50 LED_TYPE leds on pin 10, starting at index 50 in the led array
 	FastLED.addLeds<LED_TYPE, 10, COLOR_ORDER>(leds, NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP).setCorrection(TypicalLEDStrip);

@@ -6,9 +6,9 @@
 
 
 // Set color functions
-void set_section(CRGB * leds, uint16_t section_start, uint16_t section_end, CHSV color)
+void set_strip(CRGB * leds, uint16_t section_start, CHSV color)
 {
-	for (uint16_t i = section_start; i <=  section_end; i++)
+	for (uint16_t i = section_start; i <= section_start + NUM_LEDS_PER_STRIP; i++)
 	{
 		leds[i] = color;
 	}
@@ -25,11 +25,11 @@ void set_all(CRGB * leds, CHSV color)
 }
 
 // Fill color functions
-void fade_section(CRGB * leds, uint16_t section_start, uint16_t section_end, uint16_t delay_time, CHSV color)
+void fade_strip(CRGB * leds, uint16_t section_start, uint16_t delay_time, CHSV color)
 {
 	for (uint16_t i = 0; i < 255; i++)
 	{
-		set_section(leds, section_start, section_end, CHSV(color.hue, color.sat, i));
+		set_strip(leds, section_start, CHSV(color.hue, color.sat, i));
 		delay(delay_time);
 	}
 }
@@ -43,11 +43,11 @@ void fade_all(CRGB * leds, uint16_t delay_time, CHSV color)
 	}
 }
 
-void fill_section(CRGB * leds, uint16_t section_start, uint16_t section_end, uint16_t delay_time, CHSV color)
+void fill_strip(CRGB * leds, uint16_t section_start, uint8_t up_or_down, uint16_t delay_time, CHSV color)
 {
-	if (section_end > section_start) // Fill upwards
+	if (UP) // Fill upwards
 	{
-		for (uint16_t i = section_start; i <= section_end; i++)
+		for (uint16_t i = section_start; i <= section_start + NUM_LEDS_PER_STRIP; i++)
 		{
 			leds[i] = color;
 			FastLED.show();
@@ -56,7 +56,7 @@ void fill_section(CRGB * leds, uint16_t section_start, uint16_t section_end, uin
 	}
 	else // Fill downwards
 	{
-		for (uint16_t i = section_start; i >= section_end; i--)
+		for (uint16_t i = section_start + NUM_LEDS_PER_STRIP; i >= section_start; i--)
 		{
 			leds[i] = color;
 			FastLED.show();
@@ -66,25 +66,29 @@ void fill_section(CRGB * leds, uint16_t section_start, uint16_t section_end, uin
 }
 
 // Show functions
-void blink_section(CRGB * leds, uint16_t section_start, uint16_t section_end, uint16_t delay_time, CHSV color)
+void blink_strip(CRGB * leds, uint16_t section_start,  uint16_t delay_time, CHSV color)
 {
+	set_strip(leds, section_start, color);
+	delay(delay_time);
+	set_strip(leds, section_start, CHSV(0, 0, 0));
+	delay(delay_time);
 }
 
 void fade_color_upwards(CRGB * leds, uint16_t delay_time, CHSV color)
 {
-	fade_section(leds, STRIP3, STRIP3 + NUM_LEDS_PER_STRIP, delay_time, color);
-	fade_section(leds, STRIP2, STRIP2 + NUM_LEDS_PER_STRIP, delay_time, color);
-	fade_section(leds, STRIP1, STRIP1 + NUM_LEDS_PER_STRIP, delay_time, color);
-	fade_section(leds, STRIP0, STRIP0 + NUM_LEDS_PER_STRIP, delay_time, color);
+	fade_strip(leds, STRIP3, delay_time, color);
+	fade_strip(leds, STRIP2, delay_time, color);
+	fade_strip(leds, STRIP1, delay_time, color);
+	fade_strip(leds, STRIP0, delay_time, color);
 }
 
 void fade_color_downwards(CRGB * leds, uint16_t delay_time, CHSV color)
 {
 
-	fade_section(leds, STRIP0, STRIP0 + NUM_LEDS_PER_STRIP, delay_time, color);
-	fade_section(leds, STRIP1, STRIP1 + NUM_LEDS_PER_STRIP, delay_time, color);
-	fade_section(leds, STRIP2, STRIP2 + NUM_LEDS_PER_STRIP, delay_time, color);
-	fade_section(leds, STRIP3, STRIP3 + NUM_LEDS_PER_STRIP, delay_time, color);
+	fade_strip(leds, STRIP0, delay_time, color);
+	fade_strip(leds, STRIP1, delay_time, color);
+	fade_strip(leds, STRIP2, delay_time, color);
+	fade_strip(leds, STRIP3, delay_time, color);
 }
 
 void sinelon(CRGB * leds, CHSV color)
