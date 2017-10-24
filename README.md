@@ -10,3 +10,6 @@ Controller for e.g. the sound system and light system
 ####Led controller arduino
 Controller for livingroom lights
 
+# Branch husLeds:
+# Control system for livingroom LEDs
+
