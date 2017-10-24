@@ -24,6 +24,9 @@
 
 #define BRIGHTNESS         255
 #define FRAMES_PER_SECOND  200
+#define LED_DITHER  255  // try 0 to disable flickering
+#define CORRECTION  TypicalLEDStrip
+
 
 #define STRIP0 0
 #define STRIP1 49

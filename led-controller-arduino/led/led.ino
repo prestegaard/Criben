@@ -6,30 +6,13 @@ Author:	Haagon
 
 #include <FastLED.h>
 #include "leds.h"
-#include "MSGEQ7.h"
+#include "msgeq7_lauritz.h"
+#include "beat.h"
+//#include "strip.h"
 
 CRGB leds[NUM_LEDS];
 
-#define DATA_PIN 3
-#define CHIPSET     WS2811
-
-#define BRIGHTNESS  255  // reduce power consumption
-#define LED_DITHER  255  // try 0 to disable flickering
-#define CORRECTION  TypicalLEDStrip
-
-// Filterchip setup
-#define pinAnalogLeft A3 
-#define pinAnalogRight A3
-#define pinReset A1
-#define pinStrobe A2
-#define MSGEQ7_INTERVAL ReadsPerSecond(100)
-#define MSGEQ7_SMOOTH true
-
-CMSGEQ7<MSGEQ7_SMOOTH, pinReset, pinStrobe, pinAnalogLeft, pinAnalogRight> MSGEQ7;
-
 void setup() {
-	delay(3000); // 3 second delay for recovery
-
 	// tell FastLED there's 50 LED_TYPE leds on pin 9, starting at index 0 in the led array
 	FastLED.addLeds<LED_TYPE, 9, COLOR_ORDER>(leds, 0, NUM_LEDS_PER_STRIP).setCorrection(TypicalLEDStrip);
 	// tell FastLED there's 50 LED_TYPE leds on pin 10, starting at index 50 in the led array
@@ -39,124 +22,109 @@ void setup() {
 	// tell FastLED there's 50 LED_TYPE leds on pin 12, starting at index 150 in the led array
 	FastLED.addLeds<LED_TYPE, 12, COLOR_ORDER>(leds, 3 * NUM_LEDS_PER_STRIP, NUM_LEDS_PER_STRIP).setCorrection(TypicalLEDStrip);
 
-	// set master brightness control
+	// Set master brightness control
 	FastLED.setBrightness(BRIGHTNESS);
-  FastLED.setDither(LED_DITHER);
+	FastLED.setDither(LED_DITHER);
   
-  red();
-  FastLED.show();
-
-  // This will set the IC ready for reading
-  MSGEQ7.begin();
+	// Self test
+	set_strip(leds, STRIP0, CHSV(HUE_RED, 255, 255));
+	delay(300);
+	set_strip(leds, STRIP1, CHSV(HUE_BLUE, 255, 255));
+	delay(300);
+	set_strip(leds, STRIP2, CHSV(HUE_GREEN, 255, 255));
+	delay(300);
+	set_strip(leds, STRIP3, CHSV(HUE_PINK, 255, 255));
+	delay(2000);
+		
+	// This will set the filter IC ready for reading
+	msgeq7_init();
 
 }
 
 uint8_t gHue = 0;
 
+void disco(void) {
+	static uint8_t repeat = 0;
+	static uint8_t count = 0;
+	static uint16_t noBeatCount = 0;
+	static uint8_t musicMode = 1;
+	static uint8_t on = 0;
 
-int spectrumValue[7];
-const int frames = 50;
-int frame = 0;
-int bass[frames];
-int snare[frames];
-int hat[frames];
-uint8_t val;
-int count_color = 0;
-int update_color = 5;
-// the loop function runs over and over again until power down or reset
-void loop() {
-  // Analyze without delay
-  bool newReading = MSGEQ7.read(MSGEQ7_INTERVAL);
+	/*if (isBeat()){
+	puts("BEAT!!!!!!!!!!!!!!!!!!!!");
+	_delay_ms(50);
+	strip_setNewHSVColor();
+	}*/
 
-  // Led strip output
-  if (newReading) {
-    // visualize the average bass of both channels
-    //uint8_t val = MSGEQ7.get(MSGEQ7_BASS);
-    // Reduce noise
-    //val = mapNoise(val);
-    //if (val < 10){
-    //  val = 5;
-    //}
-    
-    spectrumValue[0] = MSGEQ7.get(0);
-    spectrumValue[1] = MSGEQ7.get(1);
-    spectrumValue[2] = MSGEQ7.get(2);
-    spectrumValue[3] = MSGEQ7.get(3);
-    spectrumValue[4] = MSGEQ7.get(4);
-    spectrumValue[5] = MSGEQ7.get(5);
-    spectrumValue[6] = MSGEQ7.get(6);
-    
-    int new_bass = spectrumValue[0] + spectrumValue[1];
-    int new_snare = spectrumValue[3];
-    int new_hat = spectrumValue[6] + spectrumValue[5];
-  
-    if ((new_snare/find_average(snare, frames)) > 1){
-      //val = 10;
-    }
-    if ((new_hat/find_average(hat, frames)) > 1){
-      //val = 50;
-    }
-    if ((new_bass/find_average(bass, frames)) > 1){
-      val = new_bass;
-      count_color ++;
-      if(count_color % update_color == 0){
-        gHue = gHue + random(0,255);
-        update_color = random (1,10);
-        count_color = 0;
-      }
-    }
-    else if ((new_bass/find_average(bass, frames)) > 0.7){
-      val = bass[frame];
-    }
-    else {
-      val = find_average(bass, frames)/2;
-    }
-    
-    hat[frame] = new_hat;
-    snare[frame] = new_snare;
-    bass[frame] = new_bass;
-    frame++;
-    if (frame >= frames) frame=0;
-  
-    // Visualize leds to the beat
-    CRGB color = CHSV(gHue, 255, 255);
-    color.nscale8_video(val);
-    fill_solid(leds, NUM_LEDS, color);
+	if (count == repeat) {
+		repeat = (rand() % 6 + 2) * 4;
+		count = 0;
+		musicMode = (rand() % 3) + 1;
+	}
 
-    // Update Leds
-    FastLED.show();
-  }
-	EVERY_N_MILLISECONDS(1000) { gHue++; } // slowly cycle the "base color" through the rainbow
+	switch (musicMode) {
+	case 1: //change
+		if (isBeat()) {
+			count++;
+			//strip_setNewHSVColor();
+			uint8_t newColor = random(0, 255);
+			set_all(leds, CHSV(newColor, 255, 255));
+			noBeatCount = 0;
+		}
+		else {
+			noBeatCount++;
+		}
+		break;
+	case 2: //blink
+		if (isBeat()) {
+			count++;
+			noBeatCount = 0;
+			//strip_setNewHSVColor();
+			uint8_t newColor = random(0, 255);
+			set_all(leds, CHSV(newColor, 255, 255));
+			_delay_ms(70);
+			//strip_setHSV(55555, 55555, 0);
+			set_all(leds, CHSV(0, 0, 0));
 
-}
+		}
+		else {
+			noBeatCount++;
+		}
+		break;
+	case 3: //toggle
+		if (isBeat()) {
+			count++;
+			noBeatCount = 0;
+			if (on) {
+				//strip_setHSV(55555, 55555, 0);
+				set_all(leds, CHSV(0, 0, 0));
+				on = 0;
+			}
+			else {
+				on = 1;
+				//strip_setNewHSVColor();
+				uint8_t newColor = random(0, 255);
+				set_all(leds, CHSV(newColor, 255, 255));
+			}
+			_delay_ms(50);
+		}
+		else {
+			noBeatCount++;
+		}
+		break;
+	}
 
-int find_average(int ary[], int siz){
-  double sum = 0;
-  for (int i = 0; i < siz; i++){
-    sum += ary[i];
-  }
-  return sum/siz;
-}
-
-void rainbow(){
-	uint8_t color = gHue;
-	for(uint8_t i = 0; i<50; i++){
-		leds[i] = CHSV(color, 255, 255);
-		leds[i + 49] = CHSV(color, 255, 255);
-		leds[i + 99] = CHSV(color, 255, 255);
-		//leds[i + 149] = CHSV(color, 255, 255);
-    color += 5;
+	if (noBeatCount >= 2048) {
+		noBeatCount = 2048;
+		//if (strip_fade(256)) {
+			//strip_setNewHSVColor();
+			set_all(leds, CHSV(gHue, 255, 255));
+		//}
 	}
 }
 
-void red(){
-  for(uint8_t i = 0; i<50; i++){
-    leds[i] = CHSV(0, 255, 255);
-    leds[i + 49] = CHSV(0, 255, 255);
-    leds[i + 99] = CHSV(0, 255, 255);
-    leds[i + 149] = CHSV(0, 255, 255);
- 
-  }
- 
+void loop()
+{
+	disco();
+	EVERY_N_MILLIS(20) { gHue++; }
 }
-

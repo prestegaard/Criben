@@ -36,7 +36,7 @@ THE SOFTWARE.
 
 // Use (optional) full 10 bit analog readings for MSGEQ7
 // TODO make this more useful with DUE an >10 bit ADC
-//#define MSGEQ7_10BIT
+#define MSGEQ7_10BIT
 
 // FPS makro
 #define ReadsPerSecond(f) (1000000UL / (f))
