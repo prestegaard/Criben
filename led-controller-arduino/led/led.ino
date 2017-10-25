@@ -22,7 +22,7 @@ CRGB leds[NUM_LEDS];
 #define pinAnalogRight A3
 #define pinReset A1
 #define pinStrobe A2
-#define MSGEQ7_INTERVAL ReadsPerSecond(100)
+#define MSGEQ7_INTERVAL ReadsPerSecond(50)
 #define MSGEQ7_SMOOTH true
 
 CMSGEQ7<MSGEQ7_SMOOTH, pinReset, pinStrobe, pinAnalogLeft, pinAnalogRight> MSGEQ7;
@@ -45,7 +45,7 @@ void setup() {
   
   red();
   FastLED.show();
-
+  delay(2000);
   // This will set the IC ready for reading
   MSGEQ7.begin();
 
@@ -55,8 +55,10 @@ uint8_t gHue = 0;
 
 
 int spectrumValue[7];
-const int frames = 50;
+const int frames = 40;
 int frame = 0;
+int top_val = 0;
+uint8_t strip_number = 0;
 int bass[frames];
 int snare[frames];
 int hat[frames];
@@ -98,7 +100,14 @@ void loop() {
     }
     if ((new_bass/find_average(bass, frames)) > 1){
       val = new_bass;
+      top_val = new_bass;
       count_color ++;
+      strip_number ++;
+      if(strip_number % 4 == 0)
+      {
+        strip_number = 0;
+      }
+        
       if(count_color % update_color == 0){
         gHue = gHue + random(0,255);
         update_color = random (1,10);
@@ -106,10 +115,10 @@ void loop() {
       }
     }
     else if ((new_bass/find_average(bass, frames)) > 0.7){
-      val = bass[frame];
+      val = top_val--;
     }
     else {
-      val = find_average(bass, frames)/2;
+      val = 30;
     }
     
     hat[frame] = new_hat;
@@ -122,9 +131,18 @@ void loop() {
     CRGB color = CHSV(gHue, 255, 255);
     color.nscale8_video(val);
     fill_solid(leds, NUM_LEDS, color);
-
-    // Update Leds
     FastLED.show();
+    
+//    if(strip_number>0)
+//    {
+//      set_strip(leds, (strip_number*NUM_LEDS_PER_STRIP) -1, CHSV(gHue + 128, 255, 255));
+//    }
+//    else
+//    {
+//      set_strip(leds, STRIP0, CHSV(gHue + 128, 255, 255));
+//    }
+     
+    // Update Leds
   }
 	EVERY_N_MILLISECONDS(1000) { gHue++; } // slowly cycle the "base color" through the rainbow
 
