@@ -7,19 +7,10 @@
  * @version 1.0.0 
  */
 
-
-
 var express = require('express');
 var app = express();
+var sys = require('sys')
 var exec = require('child_process').exec;
-var server = require('http').createServer(app);
-var io = require('socket.io')(server);
-
-
-// LED Parameters
-var color_hue = 0;
-var color_sat = 255;
-var color_val = 128;
 
 /**
  * Dictionary of devices and their buttons
@@ -122,7 +113,7 @@ app.get('/led/:cmd', function(req, res) {
     var cmd = req.param("cmd");
     console.log("LED CMD: " + cmd);
     //res.send("CMD: "+cmd);
-    res.redirect('/lights.html');
+    //res.redirect('/lights.html');
 
 });
 
@@ -168,38 +159,8 @@ app.get('/send/:device/:key', function(req, res) {
 }); // end define GET request for /send/deviceName/buttonName
 
 
-/* Connection events */
-io.on('connection', function(client) {
-    console.log('Client connected...');
-    //socket.emit("send planes", {x:x, y:y, z:z, name: name});
-    client.emit('init', {color_hue:color_hue, color_sat:color_sat, color_val:color_val});
-
-
-    client.on('join', function(data) {
-        console.log(data);
-        data = "halla fra server";
-        client.emit('connect', data);
-    });
-
-    client.on('messages', function(data) {
-        console.log(data)
-        data += " from server";
-        client.emit('broad', data);
-        client.broadcast.emit('broad',data);
-    });
-
-    client.on('updateColors', function(data) {
-        console.log("UPDATE COLORS: " + data.color_hue);
-        color_hue = data.color_hue;
-        color_sat = data.color_sat;
-        color_val = data.color_val;
-    });
-
-});
 
 
 
 // Listen on port 80
-server.listen(80);
-
-
+app.listen('80');

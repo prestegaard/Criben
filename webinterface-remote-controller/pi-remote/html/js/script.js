@@ -70,12 +70,13 @@ var sendKey = function(remote_name, key_name) {
     document.body.style.opacity = "0.5";
 
 $.ajax({
-  url: "/send/"+remote_name+"/"+key_name,
+  url: "/send/"+remote_name+"/"+key_name
 }).done(function(data) {
   console.log(data);
   document.body.style.opacity="1"
 });  
-}
+};
+
 $("#type").bind('change input',function(event) {
   var $this = $(this);
   var text = this.value;
@@ -106,7 +107,8 @@ $("#type").bind('change input',function(event) {
   }
 
   //console.log(text)
-})
+});
+
 $("#type").bind('keyup', function(event) {
   var keyName = "";
   $type = $("#type");
@@ -125,4 +127,57 @@ $("#type").bind('keyup', function(event) {
     default: return;
   }
   sendKey("NAD", keyName);
-})
+});
+
+
+
+
+$(document).ready(function() {
+
+    var socket = io.connect('http://localhost:80');
+
+    socket.on('connect', function (data) {
+        socket.emit('join', 'Hello World from client');
+    });
+
+
+    socket.on('init', function (data) {
+        $('#header_test').append("<br/>" + data.color_hue);
+        $('#header_test').append("<br/>" + data.color_sat);
+        $('#header_test').append("<br/>" + data.color_val);
+        $('#color_hue_value').html(data.color_hue);
+        $("#color_hue_slider").val(data.color_hue);
+        $("#color_hue_slider").trigger('change');
+
+        $('#color_sat_value').html(data.color_sat);
+        $("#color_sat_slider").val(data.color_sat);
+        $("#color_sat_slider").trigger('change');
+
+        $('#color_val_value').html(data.color_val);
+        $("#color_val_slider").val(data.color_val);
+        $("#color_val_slider").trigger('change');
+
+
+    });
+
+    socket.on('broad', function (data) {
+        $('#future').append(data + "<br/>");
+    });
+
+    $('form').submit(function (e) {
+        e.preventDefault();
+        var message = $('#chat_input').val();
+        socket.emit('messages', message);
+    });
+
+    document.getElementById("color_settings_button").addEventListener("click", myFunction);
+
+    function updateColorsFunction() {
+        document.getElementById("demo").innerHTML = "YOU CLICKED ME!";
+        var color_hue = document.getElementById("color_hue_value");
+        var color_sat = document.getElementById("color_sat_value");
+        var color_val = document.getElementById("color_val_value");
+        socket.emit('updateColors', {color_hue: color_hue, color_sat: color_sat, color_val: color_val});
+
+    }
+};
