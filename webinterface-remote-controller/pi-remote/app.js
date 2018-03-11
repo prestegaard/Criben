@@ -113,12 +113,22 @@ app.get('/send/:device/:key', function(req, res) {
   // Make sure that the user has requested a valid key/button
   var device = devices[deviceName];
   var deviceKeyFound = false;
+  var multipleVolum = false;
   for(var i = 0; i < device.length; i++) {
-    if(device[i] === key) {
+    if(device[i] === key){
       deviceKeyFound = true; 
       break;
     }
+    if(key.includes("+5")){
+      var temp = key;
+      temp = temp.replace("+5", "");
+      if(device[i] === temp){
+        deviceKeyFound = true;
+        multipleVolum = true;
+      }
+    }
   }
+
   if(!deviceKeyFound) {
     res.send("invalid key number: "+key);
     return;
@@ -126,12 +136,15 @@ app.get('/send/:device/:key', function(req, res) {
 
   // send command to irsend
   var command = "irsend SEND_ONCE "+deviceName+" "+key;
+  if(multipleVolum){
+    command += " " + key + " " + key + " " + key +" " + key;
+  }
   exec(command, function(error, stdout, stderr){
     if(error)
       res.send("Error sending command");
     else
 	res.redirect('/index.html');
-	//res.sendFile(__dirname + '/html'+'/index.html');   
+	//res.sendFile(__dirname + '/html'+'/index.html');
 	//res.send("Successfully sent command");
   });
 
@@ -139,4 +152,4 @@ app.get('/send/:device/:key', function(req, res) {
 }); // end define GET request for /send/deviceName/buttonName
 
 // Listen on port 80
-app.listen('80');
+app.listen('8080');
