@@ -119,12 +119,13 @@ app.get('/send/:device/:key', function(req, res) {
       deviceKeyFound = true; 
       break;
     }
-    if(key.includes("+5")){
+    if(key.includes("5")){
       var temp = key;
-      temp = temp.replace("+5", "");
+      temp = temp.replace("5", "");
       if(device[i] === temp){
         deviceKeyFound = true;
         multipleVolum = true;
+	key = temp
       }
     }
   }
@@ -152,4 +153,4 @@ app.get('/send/:device/:key', function(req, res) {
 }); // end define GET request for /send/deviceName/buttonName
 
 // Listen on port 80
-app.listen('8080');
+app.listen('80');
