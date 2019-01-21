@@ -5,31 +5,47 @@ Rasbian version working is http://downloads.raspberrypi.org/raspbian_lite/images
 
 
 ### Packages
+```
 sudo apt-get install lirc
-
 curl -L https://npmjs.org/install.sh | sudo sh
-
-install latest node deb package included with sudo dpkg -i
-
+#install latest node deb package included with 
+sudo dpkg -i
+```
 ### Files
 Add the following line to /boot/config.txt
-
+```
 dtoverlay=lirc-rpi,gpio_out_pin=16,gpio_in_pin=18
+```
+Add the following to /etc/wpa_supplicant/wpa_supplicant.conf
+```
+
+ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
+update_config=1
+network={
+        ssid="SSID"
+        psk="mypassword"
+}
+```
+Remember to include quotes
+
 
 
 Swap /etc/lirc/ with the included files
 
 ### Setup server environmet
+```
 cd pi-remote
 npm install
-
+```
 ### Run the server
+```
 sudo node app.js
-
+```
 ### Start server at boot time
 Add the following line to /etc/rc.local
+```
 tmux new -s remote -d "sudo node /home/pi/GIT/Criben/webinterface-remote-controller/pi-remote/app.js"
-
+```
 
 # Home Automation
 Home automation control for ac outlets, lights, temperature, etc. 
