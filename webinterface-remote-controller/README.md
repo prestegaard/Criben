@@ -1,6 +1,7 @@
 # NAD-ir-remote
-Control for NAD T474 with web interface
+Control for NAD T474 with web interface.
 Project is based upon this https://github.com/vartan/pi-remote.git
+Rasbian version working is http://downloads.raspberrypi.org/raspbian_lite/images/raspbian_lite-2016-02-29/
 
 
 ### Packages
